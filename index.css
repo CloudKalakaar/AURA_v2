@@ -120,65 +120,72 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: #fff;
 /* ─── MOBILE HUD OVERRIDES ─── */
 @media (max-width: 768px) {
     #hud {
-        display: grid;
-        grid-template-areas: 
-            "top"
-            "."
-            "side";
-        grid-template-rows: auto 1fr auto;
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
         padding: 12px;
-        gap: 10px;
         height: 100%;
+        gap: 0;
     }
     #hud-top {
-        grid-area: top;
         width: 100%;
-        justify-content: space-between;
-        gap: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        background: rgba(0,0,0,0.3);
+        padding: 8px;
+        border-radius: 12px;
     }
+    #hud-top .btn-g { padding: 6px 12px; font-size: 0.5rem; }
     #side-panel {
-        grid-area: side;
         width: 100%;
         padding: 0;
-        margin: 0;
+        margin-bottom: 8px;
     }
     .panel-card {
         width: 100%;
-        flex-direction: row !important;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 16px;
-        gap: 12px;
-        background: rgba(5,5,5,0.92);
-        border-radius: 16px;
+        flex-direction: column !important; /* Switch to stack for more vertical space */
+        padding: 12px;
+        gap: 8px;
+        background: rgba(5,5,5,0.95);
+        border: 1px solid var(--blue);
     }
-    #ref-canvas {
-        width: 60px !important;
-        height: 60px !important;
-        flex-shrink: 0;
-        display: block !important;
-    }
-    .panel-stats {
-        flex: 1;
+    
+    /* Layout within the bar */
+    .mobile-row {
         display: flex;
-        flex-direction: row !important;
-        justify-content: space-around;
+        width: 100%;
         align-items: center;
+        justify-content: space-between;
         gap: 12px;
     }
-    .panel-stats > div { flex: 1; display: flex; flex-direction: column; align-items: center; }
-    #set-wrap { border-left: none !important; padding-left: 0 !important; }
-    .form-container { max-width: 100px !important; }
-    .rep-big { font-size: 2rem; }
-    .rep-frac { font-size: 0.9rem; }
     
-    .status-pill { padding: 6px 12px; flex-shrink: 0; }
-    #stxt { font-size: 0.5rem; }
+    #ref-canvas {
+        width: 80px !important;
+        height: 80px !important;
+        border-radius: 8px;
+        background: rgba(0,0,0,0.4);
+    }
     
-    .auth-card, .onboard-card { padding: 32px 20px; width: 92%; }
-    .form-grid { grid-template-columns: 1fr; }
-    .goal-selector, .level-selector, .equip-selector { grid-template-columns: 1fr 1fr; }
+    .panel-stats {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center;
+        gap: 16px;
+    }
+    
+    .rep-big { font-size: 2.2rem; }
+    .rep-frac { font-size: 1rem; }
+    #set-wrap { border-left: 1px solid var(--border) !important; padding-left: 12px !important; }
+    
+    .ref-label { display: none; }
+    #act-name { font-size: 0.9rem !important; }
+    #act-cue { font-size: 0.6rem !important; line-height: 1.2; max-width: 120px; }
+    
+    .form-container { display: none; } /* Hide form bar on mobile to save space, use text alignment instead */
+    
+    .btn-start { padding: 12px 24px; font-size: 0.6rem; }
 }
 
 ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
