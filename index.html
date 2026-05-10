@@ -237,7 +237,25 @@
                 </div>
             </div>
 
-            <button class="btn-start" id="btn-save-profile" style="width:100%; margin-top:32px;">Generate My Program</button>
+            <div class="field" style="margin-top:20px;">
+                <label>Available Equipment</label>
+                <div class="equip-selector" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-top:4px;">
+                    <div class="goal-opt active equip-opt" data-equip="bodyweight">
+                        <div class="goal-icon" style="font-size:1.2rem;">🧘</div>
+                        <span style="font-size:0.6rem;">None</span>
+                    </div>
+                    <div class="goal-opt equip-opt" data-equip="dumbbells">
+                        <div class="goal-icon" style="font-size:1.2rem;">🏋️</div>
+                        <span style="font-size:0.6rem;">Dumbbells</span>
+                    </div>
+                    <div class="goal-opt equip-opt" data-equip="bands">
+                        <div class="goal-icon" style="font-size:1.2rem;">➰</div>
+                        <span style="font-size:0.6rem;">Bands</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-start" style="width:100%; margin-top:32px;" onclick="saveOnboard()">Complete Setup</button>
         </div>
     </div>
 
@@ -252,9 +270,15 @@
                         <p id="dash-stats" style="color:var(--dim); font-size:0.75rem;"></p>
                     </div>
                 </div>
-                <div class="dash-badge g">
-                    <span class="label">Day</span>
-                    <span id="dash-day" style="font-size:1.4rem; font-weight:800; display:block;">01</span>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div class="dash-badge g" style="cursor:pointer;" onclick="openOnboarding()" title="Edit Profile">
+                        <span class="label">Settings</span>
+                        <span style="font-size:1.2rem; display:block; margin-top:2px;">⚙️</span>
+                    </div>
+                    <div class="dash-badge g">
+                        <span class="label">Day</span>
+                        <span id="dash-day" style="font-size:1.4rem; font-weight:800; display:block;">01</span>
+                    </div>
                 </div>
             </div>
 

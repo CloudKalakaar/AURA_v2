@@ -136,8 +136,12 @@ async function initApp() {
     if (!currentUser) go('s-auth');
     else if (currentUser.username === 'admin') showAdmin();
     else {
-        if (!currentUser.profile) go('s-splash');
-        else { renderDash(); go('s-dash'); }
+        if (!currentUser.profile) {
+            go('s-splash');
+        } else {
+            renderDash();
+            // renderDash handles redirection to onboarding if equipment is missing
+        }
     }
 }
 
@@ -246,38 +250,99 @@ function toggleAdmTab(tab) {
     document.getElementById('adm-lab-wrap').classList.toggle('off', isUsers);
     document.getElementById('btn-adm-users').classList.toggle('active', isUsers);
     document.getElementById('btn-adm-lab').classList.toggle('active', !isUsers);
+    if (!isUsers) renderLab(); // Refresh lab when clicking the tab
 }
 
 function renderLab() {
     const grid = document.getElementById('lab-grid');
     if (!grid) return;
+    
+    // Safety check for DB
+    if (!DB || !DB.warmup) {
+        console.warn("Lab: DB not ready yet.");
+        return;
+    }
+
     grid.innerHTML = '';
     
     const all = [
-        ...DB.warmup.exercises.map(e => ({...e, phase:'Warmup'})),
-        ...DB.workout.exercises.map(e => ({...e, phase:'Main Workout'})),
-        ...DB.stretch.exercises.map(e => ({...e, phase:'Stretch'}))
+        ...(DB.warmup.exercises || []).map(e => ({...e, phase:'Warmup'})),
+        ...(DB.workout.exercises || []).map(e => ({...e, phase:'Workout'})),
+        ...(DB.stretch.exercises || []).map(e => ({...e, phase:'Stretch'}))
     ];
-    
+
     all.forEach(ex => {
         const d = document.createElement('div');
         d.className = 'ex-card g';
-        d.style.cursor = 'pointer';
-        d.style.padding = '12px';
+        d.style.cssText = 'cursor:pointer; padding:12px; display:grid; grid-template-columns:50px 1fr 60px; align-items:center; gap:12px; transition: transform 0.2s, background 0.2s;';
+        
+        const eq = ex.equipment || 'bodyweight';
+        const eqColor = eq === 'bodyweight' ? 'var(--blue)' : (eq === 'dumbbells' ? 'var(--warm)' : 'var(--green)');
+        
+        d.innerHTML = `
+            <div style="width:50px; height:50px; background:rgba(0,0,0,0.2); border-radius:8px; overflow:hidden;">
+                <canvas id="lab-cv-${ex.id}" width="100" height="100" style="width:100%; height:100%;"></canvas>
+            </div>
+            <div style="flex:1;">
+                <h4 style="font-size:0.75rem;">${ex.icon} ${ex.name}</h4>
+                <div style="display:flex; gap:4px; margin-top:4px;">
+                    <small style="font-size:0.5rem; color:var(--dim);">${ex.phase}</small>
+                    <small style="font-size:0.5rem; color:${eqColor}; font-weight:700; text-transform:uppercase;">• ${eq}</small>
+                </div>
+            </div>
+            <button class="btn-g" style="padding:6px 12px; font-size:0.45rem;">TEST AI</button>
+        `;
+
         d.onclick = () => {
             const testEx = { ...ex, targetReps: ex.reps || 10 };
             todayProgram = [testEx];
             startCamera().then(() => launch(testEx, 1));
         };
-        d.innerHTML = `
-            <div style="font-size:1.2rem;">${ex.icon}</div>
-            <div style="flex:1;">
-                <h4 style="font-size:0.75rem;">${ex.name}</h4>
-                <small style="font-size:0.5rem; color:var(--dim);">${ex.phase}</small>
-            </div>
-            <span class="badge" style="font-size:0.5rem;">Test</span>
-        `;
+
         grid.appendChild(d);
+
+        // Initialize small preview
+        setTimeout(() => {
+            const cv = document.getElementById(`lab-cv-${ex.id}`);
+            if (!cv) return;
+            const ctx = cv.getContext('2d');
+            const pose = REF_POSES[ex.id];
+            if (!pose) return;
+
+            let tick = 0;
+            let active = false;
+
+            const draw = () => {
+                ctx.clearRect(0, 0, 100, 100);
+                const t = active ? (Math.sin(Date.now() / 200) * 0.5 + 0.5) : 1; // Animate on hover, else show work pose
+                
+                // Simplified renderRef for small canvas
+                ctx.strokeStyle = active ? eqColor : 'rgba(255,255,255,0.4)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                const getP = (p1, p2) => ({ x: p1.x + (p2.x - p1.x) * t, y: p1.y + (p2.y - p1.y) * t });
+                const pts = {};
+                for (let k in pose.rest) pts[k] = getP(pose.rest[k], pose.work[k]);
+
+                const drawLine = (p1, p2) => {
+                    if (!pts[p1] || !pts[p2]) return;
+                    ctx.moveTo(pts[p1].x * 0.5 + 5, pts[p1].y * 0.5 + 10);
+                    ctx.lineTo(pts[p2].x * 0.5 + 5, pts[p2].y * 0.5 + 10);
+                };
+
+                drawLine('neck', 'ls'); drawLine('neck', 'rs'); drawLine('ls', 'rs');
+                drawLine('ls', 'le'); drawLine('le', 'lw'); drawLine('rs', 're'); drawLine('re', 'rw');
+                drawLine('neck', 'hip'); drawLine('hip', 'lk'); drawLine('lk', 'la'); drawLine('hip', 'rk'); drawLine('rk', 'ra');
+                ctx.stroke();
+
+                if (active) requestAnimationFrame(draw);
+            };
+
+            d.onmouseenter = () => { active = true; draw(); d.style.transform = 'scale(1.02)'; d.style.background = 'rgba(255,255,255,0.05)'; };
+            d.onmouseleave = () => { active = false; draw(); d.style.transform = 'scale(1)'; d.style.background = ''; };
+            draw(); // Initial static draw
+        }, 10);
     });
 }
 
@@ -318,9 +383,9 @@ async function resetUserProfile() {
 }
 
 // ── Dashboard & Onboarding ────────────────
-document.querySelectorAll('.goal-opt').forEach(opt => {
+document.querySelectorAll('.goal-opt:not(.equip-opt):not(.level-opt)').forEach(opt => {
     opt.addEventListener('click', () => {
-        document.querySelectorAll('.goal-opt').forEach(o => o.classList.remove('active'));
+        document.querySelectorAll('.goal-opt:not(.equip-opt):not(.level-opt)').forEach(o => o.classList.remove('active'));
         opt.classList.add('active');
     });
 });
@@ -332,19 +397,54 @@ document.querySelectorAll('.level-opt').forEach(opt => {
     };
 });
 
-function saveOnboarding() {
+document.querySelectorAll('.equip-opt').forEach(opt => {
+    opt.onclick = () => {
+        document.querySelectorAll('.equip-opt').forEach(x => x.classList.remove('active'));
+        opt.classList.add('active');
+    };
+});
+
+function openOnboarding() {
+    if (currentUser && currentUser.profile) {
+        const p = currentUser.profile;
+        document.getElementById('u-weight').value = p.weight;
+        document.getElementById('u-height').value = p.height;
+        document.getElementById('u-age').value = p.age;
+        document.getElementById('u-gender').value = p.gender;
+        
+        document.querySelectorAll('.goal-opt').forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.goal === p.goal);
+        });
+        document.querySelectorAll('.level-opt').forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.level === p.level);
+        });
+        document.querySelectorAll('.equip-opt').forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.equip === (p.equipment || 'bodyweight'));
+        });
+    }
+    go('s-onboard');
+}
+
+function saveOnboard() {
     const level = document.querySelector('.level-opt.active').dataset.level;
     const goal = document.querySelector('.goal-opt.active').dataset.goal;
+    const equipment = document.querySelector('.equip-opt.active').dataset.equip;
     const w = parseFloat(document.getElementById('u-weight').value);
     const h = parseFloat(document.getElementById('u-height').value);
     const bmi = (w / ((h / 100) ** 2)).toFixed(1);
     
+    const isNew = !currentUser.profile;
+
     currentUser.profile = { 
         weight: w, height: h, age: document.getElementById('u-age').value, 
         gender: document.getElementById('u-gender').value,
-        goal, level, bmi, day: 1
+        goal, level, equipment, bmi, day: (currentUser.profile ? currentUser.profile.day : 1)
     };
-    currentUser.stats = { totalReps: 0, sessions: 0, water: 0, steps: 0, streak: 0, totalCalories: 0, avgForm: 0, totalSets: 0 };
+
+    if (isNew) {
+        currentUser.stats = { totalReps: 0, sessions: 0, water: 0, steps: 0, streak: 0, totalCalories: 0, avgForm: 0, totalSets: 0 };
+    }
+
     Store.saveUser(currentUser.username, currentUser);
     renderDash();
     go('s-dash');
@@ -373,6 +473,14 @@ function renderDash() {
         return;
     }
     const p = currentUser.profile;
+    
+    // Force existing users to set equipment for the new version
+    if (!p.equipment) {
+        openOnboarding();
+        return;
+    }
+    
+    go('s-dash');
     
     if (p.day > 30) {
         alert("Congratulations! You have completed the 30-Day Elite Program! Let's update your stats for the next cycle.");

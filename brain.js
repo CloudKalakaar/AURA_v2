@@ -61,6 +61,7 @@ const Brain = {
             const avgForm = s.avgForm || 75;
             const level = p.level || 'intermediate';
             const goal = p.goal || 'general-fitness';
+            const equipment = p.equipment || 'bodyweight';
             const intensityPref = p.nextIntensity || 'same'; // From daily feedback
             const lastRating = p.lastRating || 3;
 
@@ -74,14 +75,20 @@ const Brain = {
             // Advanced exercises (plyometrics and compound only)
             const advancedIds = new Set(['plank-jacks','skater-hops','shadow-boxing','windmills','seal-jacks','lat-shuffles','side-crunches','hip-circles','gate-openers','burpee-squat','worlds-stretch']);
 
-            const filterByLevel = (exArr) => {
-                if (level === 'beginner')    return exArr.filter(e => beginnerIds.has(e.id) || (!advancedIds.has(e.id)));
-                if (level === 'elite')       return exArr.filter(e => advancedIds.has(e.id) || !beginnerIds.has(e.id));
-                return exArr; // Intermediate: all exercises
+            const filterByProfile = (exArr) => {
+                let filtered = exArr;
+                // 1. Level Filter
+                if (level === 'beginner') filtered = filtered.filter(e => beginnerIds.has(e.id) || (!advancedIds.has(e.id)));
+                else if (level === 'elite') filtered = filtered.filter(e => advancedIds.has(e.id) || !beginnerIds.has(e.id));
+                
+                // 2. Equipment Filter (Always include bodyweight + user's equipment)
+                filtered = filtered.filter(e => !e.equipment || e.equipment === 'bodyweight' || e.equipment === equipment);
+                
+                return filtered;
             };
 
-            const warmups   = filterByLevel([...DB.warmup.exercises]);
-            const workouts  = filterByLevel([...DB.workout.exercises]);
+            const warmups   = filterByProfile([...DB.warmup.exercises]);
+            const workouts  = filterByProfile([...DB.workout.exercises]);
             const stretches = [...DB.stretch.exercises];
 
             // Goal-aware workout sort
@@ -131,6 +138,7 @@ const Brain = {
         return {
             level: p.level, goal: p.goal, bmi: p.bmi, age: p.age,
             weight: p.weight, height: p.height, day: p.day,
+            equipment: p.equipment || 'bodyweight',
             avgForm, formTrend,
             totalCals: Math.round(s.totalCalories || 0),
             totalReps: s.totalReps || 0,
@@ -154,7 +162,7 @@ const Brain = {
             const prompt = `[INST] You are AURA, an elite AI Fitness Coach with expert biomechanical knowledge.
 
 Athlete Profile:
-- Level: ${ctx.level} | Goal: ${ctx.goal}
+- Level: ${ctx.level} | Goal: ${ctx.goal} | Equipment: ${ctx.equipment}
 - BMI: ${ctx.bmi} | Age: ${ctx.age} | Weight: ${ctx.weight}kg | Height: ${ctx.height}cm
 - Program Day: ${ctx.day} / 30 | Streak: ${ctx.streak} days
 - Form Quality: ${ctx.avgForm}% — ${ctx.formTrend}
@@ -169,6 +177,7 @@ Smart Coaching Rules:
 6. muscle-build: Low-rep strength sets with compound lifts.
 7. flexibility: Mobility-focused flows with deep stretches.
 8. Progressive overload: Every 5 days, reps should increase by 1-2.
+9. Equipment usage: ONLY suggest exercises compatible with "${ctx.equipment}". If "${ctx.equipment}" is bodyweight, suggest no weighted gear. If dumbbells, incorporate dumbbell variations.
 
 Generate exactly 11 exercises: 3 Warmups, 5 Main Workout, 3 Cool Down Stretch.
 JSON format only: { "id": "slug", "name": "Name", "icon": "Emoji", "targetReps": 12, "phase": "Phase Name" }
