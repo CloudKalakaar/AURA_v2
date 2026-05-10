@@ -181,6 +181,28 @@ function logout() {
     go('s-auth');
 }
 
+async function forgotPass() {
+    let user = prompt("Enter your username to reset password:");
+    if (!user) return;
+    user = user.toLowerCase().trim();
+    
+    const userData = await Store.findUser(user);
+    if (!userData) {
+        alert("User not found. Please check the username.");
+        return;
+    }
+    
+    const newPass = prompt(`Reset password for ${user}.\nEnter NEW password:`);
+    if (!newPass || newPass.length < 4) {
+        alert("Password must be at least 4 characters.");
+        return;
+    }
+    
+    userData.pass = newPass;
+    await Store.saveUser(user, userData);
+    alert("Password updated successfully! You can now log in.");
+}
+
 // ── Admin Dashboard ───────────────────────
 async function showAdmin() {
     go('s-admin');
