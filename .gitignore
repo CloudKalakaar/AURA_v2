@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+*.tmp
+.gemini/
+generate_hf_images.js
+generate_hf_images.py
+exercises/*.png
