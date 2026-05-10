@@ -398,6 +398,7 @@
                         <p id="act-cue" style="font-size:0.72rem;color:var(--dim);margin-top:4px;line-height:1.5;">–</p>
                     </div>
                     <div style="display:flex; justify-content:space-around; align-items:center; padding:12px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+                    <div class="panel-stats">
                         <div style="text-align:center;">
                             <span class="rep-big" id="rep-n" style="font-size:2.8rem;">0</span>
                             <span class="rep-frac" id="rep-t" style="font-size:1rem;">/ 12</span>
@@ -408,17 +409,13 @@
                             <span style="font-size:1rem; color:var(--dim);">/ 3</span>
                             <p style="font-size:0.5rem; letter-spacing:0.2em; color:var(--dim); text-transform:uppercase;">Set</p>
                         </div>
-                    </div>
-                    <div>
-                        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
-                            <span style="font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);">Form</span>
-                            <span id="form-pct-txt" style="font-size:0.55rem;color:var(--dim);">–</span>
+                        <div class="form-container" style="flex:1; max-width:140px;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                                <span style="font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);">Form</span>
+                                <span id="form-pct-txt" style="font-size:0.55rem;color:var(--dim);">–</span>
+                            </div>
+                            <div class="form-track"><div id="ff" class="form-fill"></div></div>
                         </div>
-                        <div class="form-track"><div id="ff" class="form-fill"></div></div>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:baseline;">
-                        <span style="font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);">Alignment</span>
-                        <span id="align" style="font-size:1.1rem;font-weight:700;">–</span>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         <button class="btn-g" style="width:100%; border-color:var(--dim); color:var(--dim); padding:10px;" onclick="completeManual()">Mark Completed</button>
