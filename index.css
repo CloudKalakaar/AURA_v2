@@ -91,8 +91,9 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: #fff;
 #hud { position: relative; z-index: 20; width: 100%; height: 100vh; display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: 1fr auto; gap: 0; padding: 20px; pointer-events: none; }
 #hud-top { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto; }
 #side-panel { grid-column: 2; grid-row: 1 / -1; display: flex; flex-direction: column; justify-content: center; pointer-events: auto; padding-left: 16px; }
-.panel-card { background: rgba(5,5,5,0.72); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border: 1px solid var(--border); border-radius: 20px; padding: 24px 20px; width: 240px; display: flex; flex-direction: column; gap: 16px; }
-.panel-stats { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+.panel-card { background: rgba(5,5,5,0.72); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border: 1px solid var(--border); border-radius: 20px; padding: 24px 20px; width: 240px; display: flex; flex-direction: column; gap: 20px; min-height: 400px; }
+.panel-stats { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+.panel-stats > div { width: 100%; }
 
 .rep-big { font-size: 3.8rem; font-weight: 800; line-height: 1; }
 .rep-frac { font-size: 1.4rem; font-weight: 300; color: var(--dim); }
@@ -183,7 +184,9 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: #fff;
     #act-name { font-size: 0.9rem !important; }
     #act-cue { font-size: 0.6rem !important; line-height: 1.2; max-width: 120px; }
     
-    .form-container { display: none; } /* Hide form bar on mobile to save space, use text alignment instead */
+    .form-container { display: block !important; flex: 1; min-width: 60px; }
+    #ff { height: 4px; }
+    .form-track { height: 4px; background: rgba(255,255,255,0.05); }
     
     .btn-start { padding: 12px 24px; font-size: 0.6rem; }
 }
