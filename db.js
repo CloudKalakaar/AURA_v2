@@ -19,16 +19,28 @@ const lmFn = {
   headUp:   lm => lm[0] && lm[23] && lm[24] && lm[0].y < (lm[23].y+lm[24].y)/2 - 0.15,
   headFwd:  lm => lm[0] && lm[23] && lm[24] && lm[0].y > (lm[23].y+lm[24].y)/2 + 0.08,
   shoulderUp: lm => {
-    if (!lm[11] || !lm[12] || !lm[0]) return false;
-    // Shoulders getting closer to ear/nose level
-    const noseY = lm[0].y;
-    return lm[11].y < noseY + 0.05 || lm[12].y < noseY + 0.05;
+    // Use whatever head landmark is most stable (Nose or Eye center)
+    const headY = lm[0] ? lm[0].y : (lm[1] && lm[2] ? (lm[1].y + lm[2].y) / 2 : null);
+    if (!headY || !lm[11] || !lm[12]) return false;
+    
+    // Auto-Scale: Use current shoulder width as the measuring unit
+    const sw = Math.abs(lm[11].x - lm[12].x);
+    const lDist = Math.abs(lm[11].y - headY);
+    const rDist = Math.abs(lm[12].y - headY);
+    
+    // Shrug detected if shoulders move within 35% of shoulder-width from head
+    return lDist < sw * 0.35 || rDist < sw * 0.35;
   },
   shoulderNorm: lm => {
-    if (!lm[11] || !lm[12] || !lm[0]) return false;
-    const noseY = lm[0].y;
-    // More lenient rest pose
-    return lm[11].y > noseY + 0.08 && lm[12].y > noseY + 0.08;
+    const headY = lm[0] ? lm[0].y : (lm[1] && lm[2] ? (lm[1].y + lm[2].y) / 2 : null);
+    if (!headY || !lm[11] || !lm[12]) return false;
+    
+    const sw = Math.abs(lm[11].x - lm[12].x);
+    const lDist = Math.abs(lm[11].y - headY);
+    const rDist = Math.abs(lm[12].y - headY);
+    
+    // Natural resting position is at least 55% of shoulder-width below head
+    return lDist > sw * 0.55 && rDist > sw * 0.55;
   },
   legsWide: lm => lm[27] && lm[28] && Math.abs(lm[27].x-lm[28].x) > 0.28,
   legsTog:  lm => lm[27] && lm[28] && Math.abs(lm[27].x-lm[28].x) < 0.15,

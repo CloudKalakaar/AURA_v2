@@ -1142,19 +1142,17 @@ function onResults(r) {
         if (formPct > peakForm) peakForm = formPct;
         
         const now = Date.now();
-        // Rep Logic: Require stability at peak
-        if (formPct > 75) {
-            if (!this._workStart) this._workStart = now;
-            if (now - this._workStart > 200) inWork = true; // Must hold for 200ms
-        } else {
-            this._workStart = 0;
+        // Rep Logic: Instant trigger
+        if (formPct > 70) {
+            inWork = true;
         }
 
-        // Count rep when returning to deep rest (below 35%)
-        if (formPct < 35 && inWork) {
+        // Count rep when returning toward rest (more lenient 45% threshold for speed)
+        if (formPct < 45 && inWork) {
             inWork = false;
-            // INCREASED THRESHOLD: Require 70% form peak to count as a valid rep
-            if (peakForm >= 70 && (now - (this._lastRepT || 0) > 600)) {
+            // Require 70% form peak to count as a valid rep
+            const now = Date.now();
+            if (peakForm >= 70 && (now - (this._lastRepT || 0) > 500)) {
                 this._lastRepT = now;
                 reps++; document.getElementById('rep-n').textContent = reps;
                 gsap.fromTo('#rep-n', { scale:1.4, color:'#0070FF' }, { scale:1, color:'#fff', duration:0.4 });
