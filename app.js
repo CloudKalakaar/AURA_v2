@@ -1094,7 +1094,40 @@ function onResults(r) {
     document.getElementById('align').textContent = Math.max(0, 100 - Math.abs(cx - .5) * 200).toFixed(1) + '%';
     const card = document.querySelector('.panel-card');
     if (card) gsap.to(card, { rotationY: (cx - .5) * 15, rotationX: -( (lm[11].y + lm[12].y) / 2 - .5) * 12, duration: .8 });
-    lm.forEach(p => drawDot({x:p.x*180, y:p.y*140}, 3, '#0070FF'));
+    // Sync Form Metrics to UI
+    const ff = document.getElementById('ff');
+    const fpt = document.getElementById('form-pct-txt');
+    if (ff) ff.style.width = formPct + '%';
+    if (fpt) fpt.textContent = Math.round(formPct) + '%';
+    
+    // Dynamic Bar Color based on Quality
+    if (ff) {
+        if (formPct > 85) ff.style.background = COL.blue;
+        else if (formPct > 60) ff.style.background = COL.green;
+        else if (formPct > 35) ff.style.background = COL.orange;
+        else ff.style.background = COL.red;
+    }
+
+    // Corrected Skeletal Drawing
+    lm.forEach(p => {
+        ctx.fillStyle = '#0070FF';
+        ctx.beginPath();
+        ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // Bone Connectivity
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const drawBone = (i, j) => {
+        if (!lm[i] || !lm[j]) return;
+        ctx.moveTo(lm[i].x * canvas.width, lm[i].y * canvas.height);
+        ctx.lineTo(lm[j].x * canvas.width, lm[j].y * canvas.height);
+    };
+    [ [11,12], [11,13], [13,15], [12,14], [14,16], [11,23], [12,24], [23,24], [23,25], [25,27], [24,26], [26,28] ].forEach(b => drawBone(b[0], b[1]));
+    ctx.stroke();
+
     const restScore = activeEx.checkRest(lm) ? 100 : 0;
     const workScore = activeEx.check(lm) ? 100 : 0;
     
@@ -1121,8 +1154,8 @@ function onResults(r) {
         // Count rep when returning to deep rest (below 35%)
         if (formPct < 35 && inWork) {
             inWork = false;
-            // Prevent rapid double-counting (min 500ms between reps)
-            if (peakForm >= FORM_THRESHOLD && (now - (this._lastRepT || 0) > 500)) {
+            // INCREASED THRESHOLD: Require 70% form peak to count as a valid rep
+            if (peakForm >= 70 && (now - (this._lastRepT || 0) > 600)) {
                 this._lastRepT = now;
                 reps++; document.getElementById('rep-n').textContent = reps;
                 gsap.fromTo('#rep-n', { scale:1.4, color:'#0070FF' }, { scale:1, color:'#fff', duration:0.4 });

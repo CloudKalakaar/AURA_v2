@@ -4,20 +4,45 @@ const lmFn = {
   armsDown: lm => lm[15] && lm[16] && lm[11] && lm[12] && lm[15].y > lm[11].y && lm[16].y > lm[12].y,
   armsWide: lm => lm[15] && lm[16] && lm[11] && lm[12] && Math.abs(lm[15].x-lm[11].x)>0.22 && Math.abs(lm[16].x-lm[12].x)>0.22,
   armsRest: lm => lm[15] && lm[16] && lm[11] && lm[12] && Math.abs(lm[15].x-lm[11].x)<0.12 && Math.abs(lm[16].x-lm[12].x)<0.12,
-  standing: lm => lm[25] && lm[26] && lm[23] && lm[24] && ((lm[25].y+lm[26].y)/2)-((lm[23].y+lm[24].y)/2) > 0.20,
-  squat:    lm => lm[25] && lm[26] && lm[23] && lm[24] && ((lm[25].y+lm[26].y)/2)-((lm[23].y+lm[24].y)/2) < 0.16,
+  standing: lm => {
+    const lA = lmFn.calcAngle(lm[23], lm[25], lm[27]);
+    const rA = lmFn.calcAngle(lm[24], lm[26], lm[28]);
+    return lA > 155 && rA > 155;
+  },
+  squat:    lm => {
+    const lA = lmFn.calcAngle(lm[23], lm[25], lm[27]);
+    const rA = lmFn.calcAngle(lm[24], lm[26], lm[28]);
+    return lA < 115 || rA < 115;
+  },
   kneeUp:   lm => lm[25] && lm[26] && lm[23] && lm[24] && (lm[25].y < lm[23].y || lm[26].y < lm[24].y),
   kneeDown: lm => lm[25] && lm[26] && lm[23] && lm[24] && lm[25].y > lm[23].y+0.05 && lm[26].y > lm[24].y+0.05,
   headUp:   lm => lm[0] && lm[23] && lm[24] && lm[0].y < (lm[23].y+lm[24].y)/2 - 0.15,
   headFwd:  lm => lm[0] && lm[23] && lm[24] && lm[0].y > (lm[23].y+lm[24].y)/2 + 0.08,
-  shoulderUp: lm => lm[11] && lm[12] && lm[1] && lm[4] && (Math.abs(lm[11].y - lm[1].y) < 0.04 || Math.abs(lm[12].y - lm[4].y) < 0.04),
-  shoulderNorm: lm => lm[11] && lm[12] && lm[1] && lm[4] && (Math.abs(lm[11].y - lm[1].y) > 0.08 && Math.abs(lm[12].y - lm[4].y) > 0.08),
+  shoulderUp: lm => {
+    if (!lm[11] || !lm[12] || !lm[0]) return false;
+    // Shoulders getting closer to ear/nose level
+    const noseY = lm[0].y;
+    return lm[11].y < noseY + 0.05 || lm[12].y < noseY + 0.05;
+  },
+  shoulderNorm: lm => {
+    if (!lm[11] || !lm[12] || !lm[0]) return false;
+    const noseY = lm[0].y;
+    return lm[11].y > noseY + 0.12 && lm[12].y > noseY + 0.12;
+  },
   legsWide: lm => lm[27] && lm[28] && Math.abs(lm[27].x-lm[28].x) > 0.28,
   legsTog:  lm => lm[27] && lm[28] && Math.abs(lm[27].x-lm[28].x) < 0.15,
   elbowBend: lm => lm[11] && lm[12] && lm[15] && lm[16] && (lm[11].y+lm[12].y)/2-(lm[15].y+lm[16].y)/2 < 0.13,
   elbowStr: lm => lm[11] && lm[12] && lm[15] && lm[16] && (lm[11].y+lm[12].y)/2-(lm[15].y+lm[16].y)/2 > 0.16,
-  lunge:    lm => lm[25] && lm[26] && lm[23] && lm[24] && ((lm[25].y-lm[23].y>0.28)||(lm[26].y-lm[24].y>0.28)),
-  lungRest: lm => lm[25] && lm[26] && lm[23] && lm[24] && Math.abs((lm[25].y-lm[23].y)-(lm[26].y-lm[24].y))<0.10,
+  lunge:    lm => {
+    if (!lm[23] || !lm[25] || !lm[24] || !lm[26]) return false;
+    const lKnee = Math.abs(lm[25].y - lm[23].y);
+    const rKnee = Math.abs(lm[26].y - lm[24].y);
+    return lKnee > 0.32 || rKnee > 0.32;
+  },
+  lungRest: lm => {
+    if (!lm[23] || !lm[25] || !lm[24] || !lm[26]) return false;
+    return Math.abs(lm[25].y - lm[23].y) < 0.15 && Math.abs(lm[26].y - lm[24].y) < 0.15;
+  },
   armAsym:  lm => lm[15] && lm[16] && Math.abs(lm[15].y-lm[16].y)>0.24,
   armSym:   lm => lm[15] && lm[16] && Math.abs(lm[15].y-lm[16].y)<0.10,
   hipRot:   lm => lm[23] && lm[24] && lm[11] && lm[12] && Math.abs(((lm[23].x+lm[24].x)/2) - ((lm[11].x+lm[12].x)/2)) > 0.05,
@@ -68,7 +93,18 @@ const DB = {
     desc:'Strength exercises tracked rep-by-rep with Biomechanical precision.',
     exercises:[
       { id:'squats',      name:'Air Squats',           icon:'🏋️', reps:15, equipment:'bodyweight', restCue:'Stand — feet shoulder-width apart',        cue:'Lower hips to parallel',                  restPose:'stand', workPose:'squat', checkRest:lmFn.standing,  check:lmFn.squat },
-      { id:'pushups',     name:'Standard Push-Ups',    icon:'💪', reps:12, equipment:'bodyweight', restCue:'Plank — arms fully extended',              cue:'Lower chest toward the floor',            restPose:'plank', workPose:'plankDown', checkRest:lmFn.elbowStr,  check:lmFn.elbowBend },
+      { id:'pushups',     name:'Standard Push-Ups',    icon:'💪', reps:12, equipment:'bodyweight', restCue:'Plank — arms fully extended',              cue:'Lower chest toward the floor',            restPose:'plank', workPose:'plankDown', 
+        checkRest: lm => {
+            const lA = lmFn.calcAngle(lm[11], lm[13], lm[15]);
+            const rA = lmFn.calcAngle(lm[12], lm[14], lm[16]);
+            return lA > 155 && rA > 155;
+        },  
+        check: lm => {
+            const lA = lmFn.calcAngle(lm[11], lm[13], lm[15]);
+            const rA = lmFn.calcAngle(lm[12], lm[14], lm[16]);
+            return lA < 100 || rA < 100;
+        } 
+      },
       { id:'fwd-lunges',  name:'Forward Lunges',       icon:'🦵', reps:12, equipment:'bodyweight', restCue:'Stand upright — feet hip-width',           cue:'Step forward and lower back knee',        restPose:'stand', workPose:'lunge', checkRest:lmFn.lungRest,  check:lmFn.lunge },
       { id:'rev-lunges',  name:'Reverse Lunges',       icon:'🔙', reps:12, equipment:'bodyweight', restCue:'Stand upright — feet hip-width',           cue:'Step back and lower back knee',           restPose:'stand', workPose:'lunge', checkRest:lmFn.lungRest,  check:lmFn.lunge },
       { id:'burpees',     name:'Burpees',              icon:'🔥', reps:10, equipment:'bodyweight', restCue:'Stand upright — arms relaxed',             cue:'Jump up — arms fully overhead',           restPose:'stand', workPose:'armsUp', checkRest:lmFn.armsDown,  check:lmFn.armsUp },
