@@ -27,7 +27,8 @@ const lmFn = {
   shoulderNorm: lm => {
     if (!lm[11] || !lm[12] || !lm[0]) return false;
     const noseY = lm[0].y;
-    return lm[11].y > noseY + 0.12 && lm[12].y > noseY + 0.12;
+    // More lenient rest pose
+    return lm[11].y > noseY + 0.08 && lm[12].y > noseY + 0.08;
   },
   legsWide: lm => lm[27] && lm[28] && Math.abs(lm[27].x-lm[28].x) > 0.28,
   legsTog:  lm => lm[27] && lm[28] && Math.abs(lm[27].x-lm[28].x) < 0.15,

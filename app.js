@@ -886,7 +886,7 @@ function stopRefAnim() {
 }
 
 function launch(ex, setNum) {
-    activeEx = ex; reps = 0; currentSet = setNum; inWork = false; peakForm = 0; repPhase = 'waiting_rest';
+    activeEx = ex; reps = 0; currentSet = setNum; inWork = false; peakForm = 0; repPhase = 'waiting_rest'; formPct = 0;
     
     // For circular exercises: always start with clockwise
     if (CIRCULAR_IDS.has(ex.id)) {
@@ -1086,7 +1086,8 @@ function setStatus(c, msg) {
 
 function onResults(r) {
     try {
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        if (canvas.width !== window.innerWidth) canvas.width = window.innerWidth;
+        if (canvas.height !== window.innerHeight) canvas.height = window.innerHeight;
         ctx.clearRect(0,0,canvas.width,canvas.height);
         if (!r.poseLandmarks || !activeEx || !document.getElementById('rest-overlay').classList.contains('off')) return;
     const lm = r.poseLandmarks;
@@ -1094,21 +1095,7 @@ function onResults(r) {
     document.getElementById('align').textContent = Math.max(0, 100 - Math.abs(cx - .5) * 200).toFixed(1) + '%';
     const card = document.querySelector('.panel-card');
     if (card) gsap.to(card, { rotationY: (cx - .5) * 15, rotationX: -( (lm[11].y + lm[12].y) / 2 - .5) * 12, duration: .8 });
-    // Sync Form Metrics to UI
-    const ff = document.getElementById('ff');
-    const fpt = document.getElementById('form-pct-txt');
-    if (ff) ff.style.width = formPct + '%';
-    if (fpt) fpt.textContent = Math.round(formPct) + '%';
-    
-    // Dynamic Bar Color based on Quality
-    if (ff) {
-        if (formPct > 85) ff.style.background = COL.blue;
-        else if (formPct > 60) ff.style.background = COL.green;
-        else if (formPct > 35) ff.style.background = COL.orange;
-        else ff.style.background = COL.red;
-    }
-
-    // Corrected Skeletal Drawing
+    // Skeletal Drawing
     lm.forEach(p => {
         ctx.fillStyle = '#0070FF';
         ctx.beginPath();
@@ -1133,6 +1120,18 @@ function onResults(r) {
     
     // Low-pass filter for stability
     formPct = (formPct * 0.4) + (workScore * 0.6);
+
+    // Sync Form Metrics to UI
+    const ff = document.getElementById('ff');
+    const fpt = document.getElementById('form-pct-txt');
+    if (ff) {
+        ff.style.width = formPct + '%';
+        if (formPct > 85) ff.style.background = COL.blue;
+        else if (formPct > 60) ff.style.background = COL.green;
+        else if (formPct > 35) ff.style.background = COL.orange;
+        else ff.style.background = COL.red;
+    }
+    if (fpt) fpt.textContent = Math.round(formPct) + '%';
 
     if (repPhase === 'waiting_rest') {
         const resetPct = restScore;
